@@ -919,6 +919,55 @@
       grid-column: span 2;
     }
 
+    .export-video-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 7px;
+      margin-bottom: 8px;
+    }
+
+    .video-export-box {
+      display: none;
+      flex-direction: column;
+      gap: 7px;
+      margin-bottom: 8px;
+      padding: 9px 10px;
+      border-radius: var(--r-sm);
+      background: var(--bg);
+      border: 1px solid var(--border-hover);
+    }
+
+    .video-export-box.visible {
+      display: flex;
+      animation: fadeUp 200ms var(--ease);
+    }
+
+    .video-export-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--text-primary);
+    }
+
+    .video-export-bar {
+      width: 100%;
+      height: 3px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.10);
+      overflow: hidden;
+    }
+
+    .video-export-fill {
+      width: 100%;
+      height: 100%;
+      background: var(--accent);
+      transform-origin: left center;
+      transform: scaleX(0);
+      will-change: transform;
+    }
+
     /* ==========================================================================
        STUDIO PREVIEW PANEL
        ========================================================================== */
@@ -1019,6 +1068,11 @@
       align-items: center;
       justify-content: center;
       padding: 18px;
+      transition: background-color 200ms var(--ease);
+    }
+
+    .stage.is-invert {
+      background: #FFFFFF;
     }
 
     .progress-track {
@@ -1062,7 +1116,7 @@
     .ascii-output[data-color="white"]  { color: #FFFFFF; }
     .ascii-output[data-color="green"]  { color: #34D399; }
     .ascii-output[data-color="amber"]  { color: #F59E0B; }
-    .ascii-output[data-color="matrix"] { color: #00FF41; }
+    .ascii-output[data-color="invert"] { color: #050505; }
 
     /* Empty Ambient Wave State */
     .empty-state {
@@ -1773,7 +1827,7 @@
               <label for="stWidth" class="param-label">Ширина</label>
               <span class="param-val tabular" id="stWidthVal">80 симв.</span>
             </div>
-            <input type="range" id="stWidth" class="range" min="20" max="200" value="80">
+            <input type="range" id="stWidth" class="range" min="20" max="220" value="80">
           </div>
 
           <div class="param" id="stFpsWrap">
@@ -1857,9 +1911,9 @@
                 <span>Янтарь</span>
               </label>
               <label class="color-chip">
-                <input type="radio" name="stColor" value="matrix">
-                <span class="dot-swatch" style="background:#00FF41"></span>
-                <span>Матрица</span>
+                <input type="radio" name="stColor" value="invert">
+                <span class="dot-swatch" style="background:linear-gradient(135deg,#FFFFFF 50%,#050505 50%)"></span>
+                <span>Инверт</span>
               </label>
               <label class="color-chip">
                 <input type="radio" name="stColor" value="rgb">
@@ -1923,6 +1977,38 @@
           <div class="section-head">
             <span class="section-title">03 / Экспорт</span>
           </div>
+
+          <div class="export-video-row">
+            <button type="button" id="expVidAudioBtn" class="btn btn-primary btn-full" disabled>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+              </svg>
+              <span>Видео · со звуком</span>
+            </button>
+            <button type="button" id="expVidMuteBtn" class="btn btn-full" disabled>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                <line x1="23" y1="9" x2="17" y2="15"/>
+                <line x1="17" y1="9" x2="23" y2="15"/>
+              </svg>
+              <span>Видео · без звука</span>
+            </button>
+          </div>
+
+          <div class="video-export-box" id="vidExportBox" role="status" aria-live="polite">
+            <div class="video-export-head">
+              <span id="vidExportLabel">Запись видео…</span>
+              <span class="tabular" id="vidExportPct">0%</span>
+            </div>
+            <div class="video-export-bar">
+              <div class="video-export-fill" id="vidExportFill"></div>
+            </div>
+            <button type="button" id="vidExportCancelBtn" class="btn btn-cancel btn-full" style="height:28px;font-size:11.5px;">Отмена</button>
+          </div>
+
+          <div class="feedback" id="vidExportFeedback" style="margin-bottom:8px;" role="alert"></div>
 
           <div class="export-grid">
             <button type="button" id="stCopyBtn" class="btn btn-wide" disabled>
@@ -2364,7 +2450,7 @@
         white: '#FFFFFF',
         green: '#34D399',
         amber: '#F59E0B',
-        matrix: '#00FF41',
+        invert: '#050505',
         rgb: '#FFFFFF'
       };
 
@@ -2433,6 +2519,14 @@
       const expPyBtn = $('expPyBtn');
       const expHtmlBtn = $('expHtmlBtn');
       const expPngBtn = $('expPngBtn');
+      const expVidAudioBtn = $('expVidAudioBtn');
+      const expVidMuteBtn = $('expVidMuteBtn');
+      const vidExportBox = $('vidExportBox');
+      const vidExportLabel = $('vidExportLabel');
+      const vidExportPct = $('vidExportPct');
+      const vidExportFill = $('vidExportFill');
+      const vidExportCancelBtn = $('vidExportCancelBtn');
+      const vidExportFeedback = $('vidExportFeedback');
 
       const stDimBadge = $('stDimBadge');
       const fontAutoBtn = $('fontAutoBtn');
@@ -2538,6 +2632,11 @@
         fontAuto: true,
         isRendering: false,
         cancelRender: false,
+        isExportingVideo: false,
+        cancelVideoExport: false,
+        audioCtx: null,
+        mediaElementSource: null,
+        audioDest: null,
         isPlaying: false,
         playRaf: null,
         lastPlayTs: 0,
@@ -3133,11 +3232,14 @@
       }
 
       function setStudioExportsEnabled(enabled) {
-        stCopyBtn.disabled = !enabled;
-        expTxtBtn.disabled = !enabled;
-        expPyBtn.disabled = !enabled;
-        expHtmlBtn.disabled = !enabled;
-        expPngBtn.disabled = !enabled;
+        const canVideo = enabled && state.mediaType === 'video' && state.frames.length > 1 && !state.isExportingVideo;
+        expVidAudioBtn.disabled = !canVideo;
+        expVidMuteBtn.disabled = !canVideo;
+        stCopyBtn.disabled = !enabled || state.isExportingVideo;
+        expTxtBtn.disabled = !enabled || state.isExportingVideo;
+        expPyBtn.disabled = !enabled || state.isExportingVideo;
+        expHtmlBtn.disabled = !enabled || state.isExportingVideo;
+        expPngBtn.disabled = !enabled || state.isExportingVideo;
       }
 
       function clearStudioFrames() {
@@ -3830,6 +3932,7 @@
         r.addEventListener('change', () => {
           state.colorMode = r.value;
           asciiOutput.dataset.color = r.value;
+          studioStage.classList.toggle('is-invert', r.value === 'invert');
           if (state.mediaType === 'image') {
             scheduleStudioImageRender();
           } else if (state.frames.length > 0) {
@@ -3967,6 +4070,8 @@
         if (!state.frames.length) return;
         const useRgb = state.colorMode === 'rgb' && state.renderedWithRgb;
         const isStatic = state.frames.length === 1;
+        const isInvert = state.colorMode === 'invert';
+        const bg = isInvert ? '#FFFFFF' : '#050505';
         const fg = COLOR_HEX[state.colorMode] || '#FFFFFF';
         const data = JSON.stringify(state.frames.map((f) => (useRgb && f.html ? f.html : f.text)));
 
@@ -3975,7 +4080,7 @@
 <title>ASCII Studio — Export</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#050505;color:${fg};font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 24px ${isStatic ? '24px' : '76px'}}
+body{background:${bg};color:${fg};font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 24px ${isStatic ? '24px' : '76px'}}
 pre{font-size:10px;line-height:1.05;white-space:pre;max-width:100%;overflow:auto}
 .bar{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);display:${isStatic ? 'none' : 'flex'};align-items:center;gap:12px;background:#0A0A0A;border:1px solid rgba(255,255,255,0.12);padding:7px 14px;border-radius:8px;font-size:12px;color:#FFF;font-variant-numeric:tabular-nums}
 button{background:#FFF;color:#050505;border:none;padding:5px 13px;border-radius:6px;font:600 12px inherit;cursor:pointer}
@@ -4012,8 +4117,8 @@ show(0);if(p)requestAnimationFrame(loop);
 
         c.width = Math.ceil(maxCols * charW + pad * 2);
         c.height = Math.ceil(lines.length * lineHeight + pad * 2);
-
-        ctx.fillStyle = '#050505';
+        const isInvert = state.colorMode === 'invert';
+        ctx.fillStyle = isInvert ? '#FFFFFF' : '#050505';
         ctx.fillRect(0, 0, c.width, c.height);
         ctx.font = `${fontSize}px 'JetBrains Mono', ui-monospace, Menlo, monospace`;
         ctx.textBaseline = 'top';
@@ -4046,6 +4151,329 @@ show(0);if(p)requestAnimationFrame(loop);
         c.toBlob((blob) => {
           if (blob) downloadBlob(blob, 'ascii_art.png', 'image/png');
         }, 'image/png');
+      });
+
+      /* ========================================================================
+         VIDEO EXPORT (WITH SOUND & WITHOUT SOUND)
+         ======================================================================== */
+      const SPAN_RX = /<span style="color:(rgb\([^)]+\))">([\s\S]*?)<\/span>/g;
+
+      function unescapeHtmlFast(str) {
+        return str.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+      }
+
+      function pickVideoMime(withAudio) {
+        if (typeof MediaRecorder === 'undefined') return null;
+        const candidates = withAudio
+          ? ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/mp4', 'video/webm']
+          : ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/mp4', 'video/webm'];
+        for (const mime of candidates) {
+          if (MediaRecorder.isTypeSupported(mime)) return mime;
+        }
+        return '';
+      }
+
+      function prepareExportCanvas(sampleFrame) {
+        const lines = sampleFrame.text.split('\n');
+        const maxCols = Math.max(...lines.map((l) => l.length), 1);
+        const rows = Math.max(lines.length, 1);
+
+        // Adaptive crisp monospace font size targeting ~1280px max width
+        const baseFont = Math.max(10, Math.min(18, Math.floor(1240 / (maxCols * 0.605))));
+        const lineHeight = Math.round(baseFont * 1.12);
+        const pad = 24;
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d', { alpha: false });
+        const fontDecl = `500 ${baseFont}px 'JetBrains Mono', ui-monospace, Menlo, monospace`;
+        ctx.font = fontDecl;
+        const charW = ctx.measureText('M').width || baseFont * 0.6;
+
+        // Even pixel dimensions required by VP8/VP9/H.264 codecs
+        const rawW = Math.ceil(maxCols * charW + pad * 2);
+        const rawH = Math.ceil(rows * lineHeight + pad * 2);
+        canvas.width = Math.max(2, (rawW + 1) & ~1);
+        canvas.height = Math.max(2, (rawH + 1) & ~1);
+
+        return { canvas, ctx, fontDecl, charW, lineHeight, pad };
+      }
+
+      function drawAsciiFrameToCanvas(frame, cfg) {
+        const { canvas, ctx, fontDecl, charW, lineHeight, pad } = cfg;
+        const isInvert = state.colorMode === 'invert';
+        const useRgb = state.colorMode === 'rgb' && !!frame.html;
+
+        ctx.fillStyle = isInvert ? '#FFFFFF' : '#050505';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.font = fontDecl;
+        ctx.textBaseline = 'top';
+
+        if (useRgb) {
+          const htmlLines = frame.html.split('\n');
+          for (let y = 0; y < htmlLines.length; y++) {
+            let x = pad;
+            const py = pad + y * lineHeight;
+            SPAN_RX.lastIndex = 0;
+            let m;
+            while ((m = SPAN_RX.exec(htmlLines[y])) !== null) {
+              ctx.fillStyle = m[1];
+              const txt = unescapeHtmlFast(m[2]);
+              ctx.fillText(txt, x, py);
+              x += txt.length * charW;
+            }
+          }
+        } else {
+          ctx.fillStyle = COLOR_HEX[state.colorMode] || '#FFFFFF';
+          const lines = frame.text.split('\n');
+          for (let y = 0; y < lines.length; y++) {
+            ctx.fillText(lines[y], pad, pad + y * lineHeight);
+          }
+        }
+      }
+
+      function ensureAudioRouting() {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) throw new Error('Web Audio API не поддерживается браузером');
+        if (!state.audioCtx) {
+          state.audioCtx = new AudioCtx();
+        }
+        if (!state.mediaElementSource) {
+          state.mediaElementSource = state.audioCtx.createMediaElementSource(videoEl);
+        }
+        if (!state.audioDest) {
+          state.audioDest = state.audioCtx.createMediaStreamDestination();
+          // Connect ONLY to destination stream (not speakers) for silent recording
+          state.mediaElementSource.connect(state.audioDest);
+        }
+        return state.audioDest.stream;
+      }
+
+      function updateVideoExportUI(pct, label) {
+        const clamped = Math.max(0, Math.min(100, Math.round(pct)));
+        vidExportLabel.textContent = label || `Запись видео…`;
+        vidExportPct.textContent = `${clamped}%`;
+        vidExportFill.style.transform = `scaleX(${(clamped / 100).toFixed(4)})`;
+        progressFill.style.transform = `scaleX(${(clamped / 100).toFixed(4)})`;
+        setGlobalStatus(`${label || 'Запись видео'} · ${clamped}%`, 'active');
+      }
+
+      async function exportAsciiVideo(withAudio) {
+        if (state.isExportingVideo || state.isRendering || state.mediaType !== 'video' || state.frames.length <= 1) {
+          return;
+        }
+
+        const mimeType = pickVideoMime(withAudio);
+        if (mimeType === null) {
+          showFeedback(vidExportFeedback, 'Ваш браузер не поддерживает запись через MediaRecorder', true);
+          return;
+        }
+
+        pausePlayback();
+        showFeedback(vidExportFeedback, '');
+        state.isExportingVideo = true;
+        state.cancelVideoExport = false;
+        setStudioExportsEnabled(true);
+        renderBtn.disabled = true;
+        playBtn.disabled = true;
+
+        vidExportBox.classList.add('visible');
+        progressTrack.classList.add('active');
+        updateVideoExportUI(0, withAudio ? 'Запись (со звуком)' : 'Запись (без звука)');
+
+        const fps = Math.max(1, state.renderedFps);
+        const totalFrames = state.frames.length;
+        const targetDuration = totalFrames / fps;
+        const cfg = prepareExportCanvas(state.frames[0]);
+        drawAsciiFrameToCanvas(state.frames[0], cfg);
+
+        let stream = null;
+        let videoStream = null;
+        let recorder = null;
+        let rafId = null;
+
+        const cleanup = () => {
+          if (rafId) cancelAnimationFrame(rafId);
+          try { videoEl.pause(); } catch {}
+          videoEl.muted = true;
+          if (videoStream) videoStream.getTracks().forEach((t) => t.stop());
+          state.isExportingVideo = false;
+          vidExportBox.classList.remove('visible');
+          progressTrack.classList.remove('active');
+          progressFill.style.transform = 'scaleX(0)';
+          vidExportFill.style.transform = 'scaleX(0)';
+          renderBtn.disabled = !state.videoLoaded;
+          playBtn.disabled = state.frames.length <= 1;
+          setStudioExportsEnabled(state.frames.length > 0);
+        };
+
+        try {
+          videoStream = cfg.canvas.captureStream(fps);
+          const tracks = [...videoStream.getVideoTracks()];
+
+          if (withAudio) {
+            try {
+              const audioStream = ensureAudioRouting();
+              if (state.audioCtx.state === 'suspended') {
+                await state.audioCtx.resume();
+              }
+              const audioTracks = audioStream.getAudioTracks();
+              if (!audioTracks.length) {
+                throw new Error('Аудиодорожка не обнаружена');
+              }
+              tracks.push(...audioTracks);
+            } catch (audioErr) {
+              cleanup();
+              showFeedback(
+                vidExportFeedback,
+                `Не удалось захватить звук (${audioErr.message}). Попробуйте «Видео · без звука».`,
+                true
+              );
+              setGlobalStatus('Ошибка захвата звука', 'error');
+              return;
+            }
+          }
+
+          stream = new MediaStream(tracks);
+          const recOpts = { videoBitsPerSecond: 6000000 };
+          if (mimeType) recOpts.mimeType = mimeType;
+
+          recorder = new MediaRecorder(stream, recOpts);
+          const chunks = [];
+
+          const stoppedPromise = new Promise((resolve, reject) => {
+            recorder.ondataavailable = (e) => {
+              if (e.data && e.data.size > 0) chunks.push(e.data);
+            };
+            recorder.onerror = (e) => reject(e.error || new Error('Ошибка MediaRecorder'));
+            recorder.onstop = () => resolve();
+          });
+
+          const ext = (recorder.mimeType || mimeType || '').includes('mp4') ? 'mp4' : 'webm';
+          const outName = withAudio ? `ascii_video_audio.${ext}` : `ascii_video_mute.${ext}`;
+
+          if (withAudio) {
+            videoEl.muted = false;
+            videoEl.volume = 1;
+            videoEl.currentTime = 0;
+
+            await new Promise((resolve) => {
+              const onSeek = () => {
+                videoEl.removeEventListener('seeked', onSeek);
+                resolve();
+              };
+              videoEl.addEventListener('seeked', onSeek, { once: true });
+            });
+
+            recorder.start(100);
+            try {
+              await videoEl.play();
+            } catch (playErr) {
+              recorder.stop();
+              await stoppedPromise.catch(() => {});
+              throw new Error('Не удалось запустить воспроизведение для записи звука');
+            }
+
+            let lastDrawn = -1;
+            await new Promise((resolve) => {
+              const tick = () => {
+                if (state.cancelVideoExport) {
+                  resolve();
+                  return;
+                }
+                const t = videoEl.currentTime;
+                const idx = Math.min(totalFrames - 1, Math.max(0, Math.floor(t * fps)));
+                if (idx !== lastDrawn) {
+                  drawAsciiFrameToCanvas(state.frames[idx], cfg);
+                  lastDrawn = idx;
+                }
+                updateVideoExportUI((t / targetDuration) * 100, 'Запись (со звуком)');
+
+                if (videoEl.ended || t >= targetDuration - 0.015) {
+                  resolve();
+                  return;
+                }
+                rafId = requestAnimationFrame(tick);
+              };
+              rafId = requestAnimationFrame(tick);
+            });
+
+            videoEl.pause();
+            if (recorder.state !== 'inactive') recorder.stop();
+            await stoppedPromise;
+
+            // Inform user if source video had no audio decoded
+            const noAudioDecoded =
+              (typeof videoEl.mozHasAudio === 'boolean' && !videoEl.mozHasAudio) ||
+              (typeof videoEl.webkitAudioDecodedByteCount === 'number' && videoEl.webkitAudioDecodedByteCount === 0);
+
+            if (!state.cancelVideoExport) {
+              const blob = new Blob(chunks, { type: recorder.mimeType || mimeType || 'video/webm' });
+              downloadBlob(blob, outName, blob.type);
+              if (noAudioDecoded) {
+                showFeedback(vidExportFeedback, 'Видео сохранено, но в исходном файле не обнаружена аудиодорожка.');
+              }
+              setGlobalStatus(`Сохранено · ${outName}`, 'ready');
+            } else {
+              setGlobalStatus('Запись отменена', 'idle');
+            }
+          } else {
+            // WITHOUT SOUND: precise frame-by-frame timing via performance.now()
+            recorder.start(100);
+            const frameMs = 1000 / fps;
+            const startTs = performance.now();
+            let lastDrawn = -1;
+
+            await new Promise((resolve) => {
+              const tick = (now) => {
+                if (state.cancelVideoExport) {
+                  resolve();
+                  return;
+                }
+                const elapsed = now - startTs;
+                const idx = Math.floor(elapsed / frameMs);
+
+                if (idx >= totalFrames) {
+                  updateVideoExportUI(100, 'Запись (без звука)');
+                  resolve();
+                  return;
+                }
+
+                if (idx !== lastDrawn) {
+                  drawAsciiFrameToCanvas(state.frames[idx], cfg);
+                  lastDrawn = idx;
+                  updateVideoExportUI(((idx + 1) / totalFrames) * 100, 'Запись (без звука)');
+                }
+                rafId = requestAnimationFrame(tick);
+              };
+              rafId = requestAnimationFrame(tick);
+            });
+
+            if (recorder.state !== 'inactive') recorder.stop();
+            await stoppedPromise;
+
+            if (!state.cancelVideoExport) {
+              const blob = new Blob(chunks, { type: recorder.mimeType || mimeType || 'video/webm' });
+              downloadBlob(blob, outName, blob.type);
+              setGlobalStatus(`Сохранено · ${outName}`, 'ready');
+            } else {
+              setGlobalStatus('Запись отменена', 'idle');
+            }
+          }
+        } catch (err) {
+          showFeedback(vidExportFeedback, err.message || 'Ошибка записи видео', true);
+          setGlobalStatus('Ошибка записи видео', 'error');
+        } finally {
+          cleanup();
+        }
+      }
+
+      expVidAudioBtn.addEventListener('click', () => exportAsciiVideo(true));
+      expVidMuteBtn.addEventListener('click', () => exportAsciiVideo(false));
+      vidExportCancelBtn.addEventListener('click', () => {
+        if (state.isExportingVideo) {
+          state.cancelVideoExport = true;
+          vidExportLabel.textContent = 'Отмена…';
+        }
       });
 
       /* ========================================================================
