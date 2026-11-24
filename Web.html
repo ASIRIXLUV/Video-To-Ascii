@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASCII Studio — видео в ASCII</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="bg-grid"></div>
+
+  <header class="hero">
+    <div class="logo">
+      <span class="logo-mark">▚</span>
+      <span class="logo-text">ASCII<span class="accent">Studio</span></span>
+    </div>
+    <h1>Преврати видео в <span class="accent">ASCII-арт</span></h1>
+    <p class="hero-sub">Загрузи файл или вставь ссылку TikTok — настрой и скачай результат</p>
+  </header>
+
+  <main class="layout">
+    <!-- ЛЕВАЯ ПАНЕЛЬ: контролы -->
+    <aside class="panel controls-panel">
+      <section class="block">
+        <h2>Источник</h2>
+        <div class="source-tabs">
+          <button class="tab active" data-tab="file">📁 Файл</button>
+          <button class="tab" data-tab="link">🔗 TikTok</button>
+        </div>
+
+        <div class="tab-content active" id="tab-file">
+          <label class="dropzone" id="dropzone">
+            <input type="file" id="fileInput" accept="video/*" hidden>
+            <div class="dropzone-inner">
+              <span class="dz-icon">⬆</span>
+              <span class="dz-text">Перетащи видео или нажми</span>
+              <span class="dz-hint">MP4 · WebM · MOV</span>
+            </div>
+          </label>
+        </div>
+
+        <div class="tab-content" id="tab-link">
+          <input type="text" id="tiktokUrl" class="text-input" placeholder="https://tiktok.com/...">
+          <button id="fetchTikTokBtn" class="btn btn-primary btn-full">📥 Получить видео</button>
+        </div>
+      </section>
+
+      <section class="block">
+        <h2>Настройки</h2>
+
+        <div class="control">
+          <div class="control-head">
+            <span>Ширина</span>
+            <span class="control-val" id="widthVal">80</span>
+          </div>
+          <input type="range" id="widthSlider" min="40" max="200" value="80">
+        </div>
+
+        <div class="control">
+          <div class="control-head">
+            <span>FPS</span>
+            <span class="control-val" id="fpsVal">15</span>
+          </div>
+          <input type="range" id="fpsSlider" min="5" max="30" value="15">
+        </div>
+
+        <div class="control">
+          <div class="control-head"><span>Символы</span></div>
+          <select id="charset" class="text-input">
+            <option value=" .:-=+*#%@">Классика</option>
+            <option value=" .'`^\",:;Il!i~+_-?][}{1)(|/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$">Детально</option>
+            <option value=" .-+*#@">Контраст</option>
+            <option value=" ░▒▓█">Блоки</option>
+          </select>
+        </div>
+
+        <div class="control">
+          <div class="control-head"><span>Цвет</span></div>
+          <div class="color-row">
+            <label class="color-swatch">
+              <input type="radio" name="color" value="mono" checked>
+              <span class="swatch" style="background:#00ff88"></span>
+              <span>Зелёный</span>
+            </label>
+            <label class="color-swatch">
+              <input type="radio" name="color" value="white">
+              <span class="swatch" style="background:#fff"></span>
+              <span>Белый</span>
+            </label>
+            <label class="color-swatch">
+              <input type="radio" name="color" value="amber">
+              <span class="swatch" style="background:#ffb000"></span>
+              <span>Янтарь</span>
+            </label>
+            <label class="color-swatch">
+              <input type="radio" name="color" value="rgb">
+              <span class="swatch" style="background:linear-gradient(90deg,#f00,#0f0,#00f)"></span>
+              <span>RGB</span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <section class="block">
+        <h2>Экспорт</h2>
+        <div class="export-grid">
+          <button id="downloadTxtBtn" class="btn" disabled>💾 .txt</button>
+          <button id="downloadPyBtn" class="btn" disabled>🐍 .py</button>
+          <button id="downloadHtmlBtn" class="btn" disabled>🌐 .html</button>
+        </div>
+      </section>
+    </aside>
+
+    <!-- ЦЕНТР: предпросмотр -->
+    <section class="panel preview-panel">
+      <div class="preview-head">
+        <h2>Предпросмотр</h2>
+        <div class="preview-actions">
+          <button id="playBtn" class="btn btn-icon" disabled title="Воспроизвести">▶</button>
+          <button id="pauseBtn" class="btn btn-icon" disabled title="Пауза">⏸</button>
+          <button id="renderBtn" class="btn btn-primary" disabled>⚡ Рендер</button>
+        </div>
+      </div>
+
+      <div class="preview-stage">
+        <pre id="asciiOutput" class="ascii-output">Здесь появится ASCII-предпросмотр…</pre>
+        <div class="preview-empty" id="previewEmpty">
+          <div class="empty-icon">▚▞</div>
+          <p>Загрузи видео или вставь ссылку TikTok</p>
+        </div>
+      </div>
+
+      <div class="timeline">
+        <input type="range" id="frameSlider" min="0" max="0" value="0" disabled>
+        <div class="timeline-info">
+          <span id="frameInfo">Кадр 0 / 0</span>
+          <span id="statusEl" class="status">Ожидание</span>
+        </div>
+      </div>
+
+      <video id="videoEl" hidden crossorigin="anonymous"></video>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>ASCII Studio · работает в браузере, ничего не загружается на сервер</span>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
